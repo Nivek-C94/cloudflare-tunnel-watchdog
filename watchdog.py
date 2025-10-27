@@ -50,8 +50,9 @@ def site_online(url):
     except requests.RequestException:
         return False
 
-
-def perform_actions(actions):
+    log(
+        "💡 Reminder: This service is set to auto-run on boot via systemd (cloudflare-watchdog.service)."
+    )
     for cmd in actions:
         run_command(cmd)
 
