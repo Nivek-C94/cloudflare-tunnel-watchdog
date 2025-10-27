@@ -1,0 +1,13 @@
+target_url: "http://localhost:8787"
+check_interval: 30
+failure_threshold: 3
+wifi_network: "YourWiFiSSID"
+actions:
+  on_internet_down:
+    - "nmcli device wifi connect YourWiFiSSID"
+    - "sleep 10"
+  on_site_down:
+    - "pm2 restart all"
+    - "cloudflared tunnel restart mytunnel"
+  on_recovery:
+    - "echo '✅ Services recovered successfully.'"
