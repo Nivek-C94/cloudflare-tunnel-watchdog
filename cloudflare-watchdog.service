@@ -1,0 +1,17 @@
+[Unit]
+Description=Cloudflare Tunnel Watchdog Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/cloudflare-tunnel-watchdog/watchdog.py
+WorkingDirectory=/path/to/cloudflare-tunnel-watchdog
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=cloudflare-watchdog
+User=pi  # Change to your system user
+
+[Install]
+WantedBy=multi-user.target
