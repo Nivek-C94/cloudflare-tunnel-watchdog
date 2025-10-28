@@ -2,11 +2,26 @@ import logging
 import os
 import requests
 import subprocess
+import sys
 import time
 import yaml
 from datetime import datetime
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
+
+def get_config_path():
+    if getattr(sys, "frozen", False):  # PyInstaller bundle
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(__file__)
+
+    path = os.path.join(base_path, "config.yaml")
+    if not os.path.exists(path):
+        fallback = os.path.join(os.getcwd(), "config.yaml")
+        return fallback
+    return path
+
+
+CONFIG_PATH = get_config_path()
 LOG_PATH = os.path.join(os.path.dirname(__file__), "watchdog.log")
 
 logging.basicConfig(
