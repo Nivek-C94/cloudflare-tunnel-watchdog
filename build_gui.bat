@@ -17,7 +17,7 @@ del /q *.spec 2>nul
 REM Package with PyInstaller
 pyinstaller --onefile --noconsole --name %APP_NAME% %ENTRY_POINT%
 
-if %ERRORLEVEL% neq 0 (
+pyinstaller --onefile --noconsole --add-data "config.yaml;." --name %APP_NAME% %ENTRY_POINT%
     echo ❌ Build failed.
     exit /b %ERRORLEVEL%
 )
