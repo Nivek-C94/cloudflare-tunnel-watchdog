@@ -14,7 +14,7 @@ python3 -m pip install pyinstaller PyQt6 pyyaml requests
 # Clean previous builds
 rm -rf build $OUTPUT_DIR *.spec
 
-# Package with PyInstaller
+pyinstaller --onefile --noconsole --add-data "config.yaml;." --name "$APP_NAME" "$ENTRY_POINT"
 pyinstaller --onefile --noconsole --name "$APP_NAME" "$ENTRY_POINT"
 
 # Move output to dist/
