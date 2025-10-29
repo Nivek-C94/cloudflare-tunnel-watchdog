@@ -99,6 +99,7 @@ class WatchdogGUI(QMainWindow):
                 self.style().StandardPixmap.SP_MessageBoxInformation
             )
         )
+        tray_menu = QMenu()
         tray_menu.addAction("Start", self.start_watchdog)
         tray_menu.addAction("Stop", self.stop_watchdog)
         tray_menu.addAction("Restore", self.showNormal)
