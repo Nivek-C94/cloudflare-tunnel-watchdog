@@ -41,8 +41,12 @@ class WatchdogGUI(QMainWindow):
 
         self.tabs.addTab(self.monitor_tab, "Monitor")
         self.tabs.addTab(self.config_tab, "Config")
-        self.tabs.addTab(self.dashboard_tab, "Dashboard")
-
+        self.config_editor = QTextEdit()
+        try:
+            with open(self.core.config_path, "r") as f:
+                self.config_editor.setPlainText(f.read())
+        except Exception:
+            self.config_editor.setPlainText("# Unable to load config.yaml")
         # --- Monitor Tab ---
         self.status_label = QLabel("Status: Idle")
         self.text_area = QTextEdit(self)
