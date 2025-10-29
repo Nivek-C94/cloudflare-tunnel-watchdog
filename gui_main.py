@@ -10,6 +10,9 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QFileDialog,
+    QTabWidget,
+    QSystemTrayIcon,
+    QMenu,
 )
 from threading import Thread
 from watchdog_core import WatchdogCore
