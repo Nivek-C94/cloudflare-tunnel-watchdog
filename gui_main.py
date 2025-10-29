@@ -160,6 +160,14 @@ class WatchdogGUI(QMainWindow):
             f.write(self.config_editor.toPlainText())
         self.log_message("💾 Config saved.")
 
+    def closeEvent(self, event):
+        try:
+            self.core.stop()
+        except Exception:
+            pass
+        QApplication.quit()
+        event.accept()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
