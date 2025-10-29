@@ -26,16 +26,20 @@ LOG_PATH = os.path.join(os.path.dirname(__file__), "watchdog.log")
 
 # --- Rotating Log Setup ---
 from logging.handlers import RotatingFileHandler
-from win10toast import ToastNotifier
+
+# --- Rotating Log Setup ---
+from logging.handlers import RotatingFileHandler
+from winotify import Notification
 
 LOG_PATH = os.path.join(os.path.dirname(__file__), "watchdog.log")
 logger = logging.getLogger("watchdog")
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(LOG_PATH, maxBytes=1024 * 1024, backupCount=3)
+handler = RotatingFileHandler(
+    LOG_PATH, maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
+)
 formatter = logging.Formatter("[%(asctime)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-toaster = ToastNotifier()
 
 
 class WatchdogCore:
@@ -46,16 +50,18 @@ class WatchdogCore:
 
     def log(self, msg):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def log(self, msg):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {msg}")
         logger.info(msg)
         try:
-            toaster.show_toast(
-                "Cloudflare Watchdog", msg, icon_path=None, duration=3, threaded=True
+            toast = Notification(
+                app_id="Cloudflare Watchdog", title="Cloudflare Watchdog", msg=msg
             )
+            toast.show()
         except Exception:
             pass
-
-    def load_config(self):
         with open(self.config_path, "r") as f:
             self.config = yaml.safe_load(f)
 
