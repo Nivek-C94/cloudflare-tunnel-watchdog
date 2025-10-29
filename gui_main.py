@@ -92,13 +92,13 @@ class WatchdogGUI(QMainWindow):
         self.core = WatchdogCore()
         self.thread = None
 
-        # --- Tray Icon ---
         self.tray = QSystemTrayIcon(
             QIcon(icon_path)
             if os.path.exists(icon_path)
-            else self.style().standardIcon(QSystemTrayIcon.MessageIcon.Information)
+            else self.style().standardIcon(
+                self.style().StandardPixmap.SP_MessageBoxInformation
+            )
         )
-        tray_menu = QMenu()
         tray_menu.addAction("Start", self.start_watchdog)
         tray_menu.addAction("Stop", self.stop_watchdog)
         tray_menu.addAction("Restore", self.showNormal)
