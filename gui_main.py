@@ -69,11 +69,20 @@ class WatchdogGUI(QMainWindow):
         config_layout.addWidget(self.save_config_btn)
         self.config_tab.setLayout(config_layout)
 
-        # --- Dashboard Tab (placeholder for Phase 3) ---
-        self.dash_label = QLabel("Dashboard metrics will appear here.")
+        # --- Dashboard Tab ---
+        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+        self.figure, self.ax = plt.subplots()
+        self.canvas = FigureCanvas(self.figure)
+        self.update_btn = QPushButton("Check for Update")
         dash_layout = QVBoxLayout()
-        dash_layout.addWidget(self.dash_label)
+        dash_layout.addWidget(self.canvas)
+        dash_layout.addWidget(self.update_btn)
         self.dashboard_tab.setLayout(dash_layout)
+
+        self.timestamps = []
+        self.statuses = []
 
         # --- Main Layout ---
         self.setCentralWidget(self.tabs)
