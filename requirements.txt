@@ -2,4 +2,4 @@ PyQt6
 matplotlib
 requests
 pyyaml
-win10toast
+winotify
