@@ -18,65 +18,130 @@ from watchdog_core import WatchdogCore
 class WatchdogGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Cloudflare Tunnel Watchdog")
-        # Set window icon
-        if getattr(sys, "frozen", False):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.dirname(__file__)
+        self.setWindowTitle("Cloudflare Tunnel Watchdog v2.0")
+
+        # Load icon
+        base_path = (
+            os.path.dirname(sys.executable)
+            if getattr(sys, "frozen", False)
+            else os.path.dirname(__file__)
+        )
         icon_path = os.path.join(base_path, "cloudflare_watchdog_logo.png")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
+        # --- Tabs ---
+        self.tabs = QTabWidget()
+        self.monitor_tab = QWidget()
+        self.config_tab = QWidget()
+        self.dashboard_tab = QWidget()
+
+        self.tabs.addTab(self.monitor_tab, "Monitor")
+        self.tabs.addTab(self.config_tab, "Config")
+        self.tabs.addTab(self.dashboard_tab, "Dashboard")
+
+        # --- Monitor Tab ---
         self.status_label = QLabel("Status: Idle")
         self.text_area = QTextEdit(self)
         self.text_area.setReadOnly(True)
+        self.start_btn = QPushButton("Start")
+        self.stop_btn = QPushButton("Stop")
+        self.reload_btn = QPushButton("Reload Config")
+        self.viewlog_btn = QPushButton("View Log")
 
-        self.start_btn = QPushButton("Start Watchdog")
-        self.stop_btn = QPushButton("Stop Watchdog")
-        self.load_cfg_btn = QPushButton("Edit Config")
+        vbox = QVBoxLayout()
+        for w in [
+            self.status_label,
+            self.text_area,
+            self.start_btn,
+            self.stop_btn,
+            self.reload_btn,
+            self.viewlog_btn,
+        ]:
+            vbox.addWidget(w)
+        self.monitor_tab.setLayout(vbox)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.status_label)
-        layout.addWidget(self.text_area)
-        layout.addWidget(self.start_btn)
-        layout.addWidget(self.stop_btn)
-        layout.addWidget(self.load_cfg_btn)
+        # --- Config Tab ---
+        self.config_editor = QTextEdit()
+        self.save_config_btn = QPushButton("Save Config")
+        config_layout = QVBoxLayout()
+        config_layout.addWidget(self.config_editor)
+        config_layout.addWidget(self.save_config_btn)
+        self.config_tab.setLayout(config_layout)
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+        # --- Dashboard Tab (placeholder for Phase 3) ---
+        self.dash_label = QLabel("Dashboard metrics will appear here.")
+        dash_layout = QVBoxLayout()
+        dash_layout.addWidget(self.dash_label)
+        self.dashboard_tab.setLayout(dash_layout)
 
+        # --- Main Layout ---
+        self.setCentralWidget(self.tabs)
         self.core = WatchdogCore()
         self.thread = None
 
+        # --- Tray Icon ---
+        self.tray = QSystemTrayIcon(
+            QIcon(icon_path)
+            if os.path.exists(icon_path)
+            else self.style().standardIcon(QSystemTrayIcon.MessageIcon.Information)
+        )
+        tray_menu = QMenu()
+        tray_menu.addAction("Start", self.start_watchdog)
+        tray_menu.addAction("Stop", self.stop_watchdog)
+        tray_menu.addAction("Restore", self.showNormal)
+        tray_menu.addAction("Exit", QApplication.quit)
+        self.tray.setContextMenu(tray_menu)
+        self.tray.show()
+
+        # --- Bind Buttons ---
         self.start_btn.clicked.connect(self.start_watchdog)
         self.stop_btn.clicked.connect(self.stop_watchdog)
-        self.load_cfg_btn.clicked.connect(self.edit_config)
+        self.reload_btn.clicked.connect(self.reload_config)
+        self.viewlog_btn.clicked.connect(self.view_log)
+        self.save_config_btn.clicked.connect(self.save_config)
 
     def start_watchdog(self):
         if not self.thread or not self.thread.is_alive():
+            from threading import Thread
+
             self.thread = Thread(target=self.core.start, args=(self.log_message,))
             self.thread.daemon = True
             self.thread.start()
-            self.status_label.setText("Status: Running")
+            self.status_label.setText("Status: Running 🟢")
+            self.tray.setToolTip("Cloudflare Watchdog - Online 🟢")
             self.log_message("▶️ Watchdog started.")
 
     def stop_watchdog(self):
         self.core.stop()
-        self.status_label.setText("Status: Stopped")
+        self.status_label.setText("Status: Stopped 🔴")
+        self.tray.setToolTip("Cloudflare Watchdog - Offline 🔴")
         self.log_message("⏹️ Watchdog stopped.")
+
+    def reload_config(self):
+        self.core.load_config()
+        self.log_message("🔁 Configuration reloaded.")
 
     def log_message(self, msg):
         self.text_area.append(msg)
+        lines = self.text_area.toPlainText().splitlines()
+        if len(lines) > 500:
+            self.text_area.setPlainText("\n".join(lines[-500:]))
         self.text_area.ensureCursorVisible()
 
-    def edit_config(self):
-        path = self.core.config_path
-        QFileDialog.getOpenFileName(
-            self, "Open Config File", path, "YAML Files (*.yaml *.yml)"
-        )
-        self.log_message("📝 Opened config for editing.")
+    def view_log(self):
+        import subprocess
+
+        log_path = os.path.join(os.path.dirname(__file__), "watchdog.log")
+        if os.path.exists(log_path):
+            os.startfile(log_path)
+        else:
+            self.log_message("⚠️ Log file not found.")
+
+    def save_config(self):
+        with open(self.core.config_path, "w") as f:
+            f.write(self.config_editor.toPlainText())
+        self.log_message("💾 Config saved.")
 
 
 if __name__ == "__main__":
