@@ -43,7 +43,17 @@ logger.addHandler(handler)
 
 
 class WatchdogCore:
-    def __init__(self, config_path=CONFIG_PATH):
+    def load_config(self):
+        import yaml
+
+        try:
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                self.config = yaml.safe_load(f) or {}
+        except FileNotFoundError:
+            self.config = {}
+        except Exception as e:
+            self.config = {}
+            logger.error(f"Failed to load config: {e}")
         self.config_path = config_path
         self.load_config()
         self.running = False
