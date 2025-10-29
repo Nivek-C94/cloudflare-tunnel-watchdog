@@ -19,7 +19,14 @@ class WatchdogGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Cloudflare Tunnel Watchdog")
-        self.resize(700, 500)
+        # Set window icon
+        if getattr(sys, "frozen", False):
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.path.dirname(__file__)
+        icon_path = os.path.join(base_path, "cloudflare_watchdog_logo.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
 
         self.status_label = QLabel("Status: Idle")
         self.text_area = QTextEdit(self)
