@@ -101,7 +101,7 @@ class WatchdogGUI(QMainWindow):
         # --- Bind Buttons ---
         self.start_btn.clicked.connect(self.start_watchdog)
         self.stop_btn.clicked.connect(self.stop_watchdog)
-        self.reload_btn.clicked.connect(self.reload_config)
+        # self.reload_btn.clicked.connect(self.reload_config)  # Removed - now handled automatically
         self.viewlog_btn.clicked.connect(self.view_log)
         self.settings_btn.clicked.connect(self.open_settings)
 
@@ -192,8 +192,20 @@ class WatchdogGUI(QMainWindow):
             }
         )
         self.core.save_settings()
-        self.log_message("Settings saved and applied.")
+        self.core.settings = self.core.load_settings()
+        self.log_message("💾 Settings saved and reloaded.")
         dialog.accept()
+
+    def start_watchdog(self):
+        self.core.settings = self.core.load_settings()
+        self.log_message("🔁 Settings loaded before starting watchdog.")
+        if not hasattr(self, "thread") or not self.thread.is_alive():
+            self.thread = Thread(target=self.core.start, args=(self.log_message,))
+            self.thread.daemon = True
+            self.thread.start()
+            self.status_label.setText("Status: Running 🟢")
+            self.tray.setToolTip("Cloudflare Watchdog - Online 🟢")
+            self.log_message("▶️ Watchdog started.")
 
     def view_log(self):
         import os, subprocess
