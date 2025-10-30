@@ -1,5 +1,4 @@
 import os, sys
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication,
@@ -9,7 +8,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QLabel,
-    QFileDialog,
     QTabWidget,
     QSystemTrayIcon,
     QMenu,
@@ -40,12 +38,6 @@ class WatchdogGUI(QMainWindow):
 
         self.tabs.addTab(self.monitor_tab, "Monitor")
         self.tabs.addTab(self.dashboard_tab, "Dashboard")
-        self.config_editor = QTextEdit()
-        try:
-            with open(self.core.config_path, "r") as f:
-                self.config_editor.setPlainText(f.read())
-        except Exception:
-            self.config_editor.setPlainText("# Unable to load config.yaml")
         # --- Monitor Tab ---
         self.status_label = QLabel("Status: Idle")
         self.text_area = QTextEdit(self)
