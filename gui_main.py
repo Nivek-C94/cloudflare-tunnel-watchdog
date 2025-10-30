@@ -69,14 +69,6 @@ class WatchdogGUI(QMainWindow):
             vbox.addWidget(w)
         self.monitor_tab.setLayout(vbox)
 
-        # --- Config Tab ---
-        self.config_editor = QTextEdit()
-        self.save_config_btn = QPushButton("Save Config")
-        config_layout = QVBoxLayout()
-        config_layout.addWidget(self.config_editor)
-        config_layout.addWidget(self.save_config_btn)
-        self.config_tab.setLayout(config_layout)
-
         # --- Dashboard Tab ---
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
