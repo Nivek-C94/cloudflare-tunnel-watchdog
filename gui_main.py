@@ -177,7 +177,8 @@ class WatchdogGUI(QMainWindow):
         layout.addWidget(save_btn)
 
         dialog.setLayout(layout)
-        dialog.exec()
+        self.core.reload_settings()
+        self.log_message("🔄 Settings reloaded after closing settings menu.")
         self.open_settings()
 
     def save_settings(self, dialog, target_url, interval, retries, recovery_text):
@@ -196,7 +197,8 @@ class WatchdogGUI(QMainWindow):
         self.log_message("💾 Settings saved and reloaded.")
         dialog.accept()
 
-    def start_watchdog(self):
+        self.core.reload_settings()
+        self.log_message("✅ Reloaded latest settings before starting watchdog.")
         self.core.settings = self.core.load_settings()
         self.log_message("🔁 Settings loaded before starting watchdog.")
         if not hasattr(self, "thread") or not self.thread.is_alive():
