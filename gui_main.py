@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QTabWidget,
     QSystemTrayIcon,
-    QMenu,
+    QSpinBox,
 )
 from threading import Thread
 from watchdog_core import WatchdogCore
@@ -44,7 +44,7 @@ class WatchdogGUI(QMainWindow):
         self.text_area.setReadOnly(True)
         self.start_btn = QPushButton("Start")
         self.stop_btn = QPushButton("Stop")
-        self.reload_btn = QPushButton("Reload")
+        # self.reload_btn = QPushButton('Reload')  # removed, no longer needed
         self.viewlog_btn = QPushButton("View Log")
         self.settings_btn = QPushButton("Settings")
 
@@ -54,7 +54,7 @@ class WatchdogGUI(QMainWindow):
             self.text_area,
             self.start_btn,
             self.stop_btn,
-            self.reload_btn,
+            # self.reload_btn,
             self.viewlog_btn,
             self.settings_btn,
         ]:
