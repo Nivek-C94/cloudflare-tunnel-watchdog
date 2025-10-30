@@ -135,30 +135,48 @@ class WatchdogGUI(QMainWindow):
         self.tray.setToolTip("Cloudflare Watchdog - Offline 🔴")
         self.log_message("⏹️ Watchdog stopped.")
 
+    def open_settings(self):
+        settings = self.core.settings
+        from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Settings")
+        layout = QFormLayout(dialog)
+
+        url_input = QLineEdit(settings.get("target_url", ""))
+        interval_input = QLineEdit(str(settings.get("check_interval", 30)))
+        retries_input = QLineEdit(str(settings.get("retries", 3)))
+
+        layout.addRow("Target URL", url_input)
+        layout.addRow("Check Interval (s)", interval_input)
+        layout.addRow("Retries", retries_input)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        layout.addRow(buttons)
+
+        def save_settings():
+            new_settings = {
+                "target_url": url_input.text().strip(),
+                "check_interval": int(interval_input.text().strip() or 30),
+                "retries": int(retries_input.text().strip() or 3),
+            }
+            self.core.save_settings(new_settings)
+            self.log_message("💾 Settings saved.")
+            dialog.accept()
+
+        buttons.accepted.connect(save_settings)
+        buttons.rejected.connect(dialog.reject)
+        dialog.exec()
+
     def reload_config(self):
-        self.core.load_config()
-        self.log_message("🔁 Configuration reloaded.")
-
-    def log_message(self, msg):
-        self.text_area.append(msg)
-        lines = self.text_area.toPlainText().splitlines()
-        if len(lines) > 500:
-            self.text_area.setPlainText("\n".join(lines[-500:]))
-        self.text_area.ensureCursorVisible()
-
-    def view_log(self):
-        import subprocess
-
-        log_path = os.path.join(os.path.dirname(__file__), "watchdog.log")
-        if os.path.exists(log_path):
-            os.startfile(log_path)
-        else:
-            self.log_message("⚠️ Log file not found.")
+        self.core.settings = self.core.load_settings()
+        self.log_message("🔁 Settings reloaded.")
 
     def save_config(self):
-        with open(self.core.config_path, "w") as f:
-            f.write(self.config_editor.toPlainText())
-        self.log_message("💾 Config saved.")
+        self.open_settings()
 
     def closeEvent(self, event):
         try:
