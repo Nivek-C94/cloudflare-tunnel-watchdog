@@ -147,36 +147,53 @@ class WatchdogGUI(QMainWindow):
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
         )
-        layout.addRow(buttons)
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Settings")
+        layout = QFormLayout(dialog)
 
-        def save_settings():
-            new_settings = {
-                "target_url": url_input.text().strip(),
-                "check_interval": int(interval_input.text().strip() or 30),
-                "retries": int(retries_input.text().strip() or 3),
-            }
-            self.core.save_settings(new_settings)
-            self.log_message("💾 Settings saved.")
-            dialog.accept()
+        target_input = QLineEdit(settings.get("target_url", ""))
+        interval_input = QSpinBox()
+        interval_input.setValue(settings.get("check_interval", 30))
+        retries_input = QSpinBox()
+        retries_input.setValue(settings.get("retries", 3))
+        recovery_input = QTextEdit()
+        recovery_input.setPlainText("\n".join(settings.get("on_fail", [])))
 
-        buttons.accepted.connect(save_settings)
-        buttons.rejected.connect(dialog.reject)
+        layout.addRow("Target URL", target_input)
+        layout.addRow("Check Interval (s)", interval_input)
+        layout.addRow("Retries", retries_input)
+        layout.addRow("Recovery Commands (one per line)", recovery_input)
+
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(
+            lambda: self.save_settings(
+                dialog,
+                target_input.text(),
+                interval_input.value(),
+                retries_input.value(),
+                recovery_input.toPlainText(),
+            )
+        )
+        layout.addWidget(save_btn)
+
+        dialog.setLayout(layout)
         dialog.exec()
-
-    def reload_config(self):
-        self.core.settings = self.core.load_settings()
-        self.log_message("🔁 Settings reloaded.")
-
-    def save_config(self):
         self.open_settings()
 
-    def closeEvent(self, event):
-        try:
-            self.core.stop()
-        except Exception:
-            pass
-        QApplication.quit()
-        event.accept()
+    def save_settings(self, dialog, target_url, interval, retries, recovery_text):
+        self.core.settings.update(
+            {
+                "target_url": target_url,
+                "check_interval": interval,
+                "retries": retries,
+                "on_fail": [
+                    cmd.strip() for cmd in recovery_text.splitlines() if cmd.strip()
+                ],
+            }
+        )
+        self.core.save_settings()
+        self.log_message("Settings saved and applied.")
+        dialog.accept()
 
     def view_log(self):
         import os, subprocess
