@@ -81,13 +81,16 @@ class WatchdogGUI(QMainWindow):
         self.core = WatchdogCore()
         self.thread = None
 
-        self.tray = QSystemTrayIcon(
-            QIcon(icon_path)
-            if os.path.exists(icon_path)
-            else self.style().standardIcon(
-                self.style().StandardPixmap.SP_MessageBoxInformation
+        # --- System Tray Icon with Fallback ---
+        icon_path = os.path.join(base_path, "cloudflare_watchdog_logo.png")
+        if not os.path.exists(icon_path):
+            self.log_message("⚠️ App logo not found, using default tray icon.")
+            tray_icon = QSystemTrayIcon(
+                self.style().standardIcon(self.style().StandardPixmap.SP_ComputerIcon)
             )
-        )
+        else:
+            tray_icon = QSystemTrayIcon(QIcon(icon_path))
+        self.tray = tray_icon
         tray_menu = QMenu()
         tray_menu.addAction("Start", self.start_watchdog)
         tray_menu.addAction("Stop", self.stop_watchdog)
