@@ -1,69 +1,60 @@
+import json
 import logging
 import os
 import requests
-import subprocess
-import sys
 import time
-import yaml
 from datetime import datetime
-
-
-def get_config_path():
-    if getattr(sys, "frozen", False):  # PyInstaller bundle
-        base_path = os.path.dirname(sys.executable)
-    else:
-        base_path = os.path.dirname(__file__)
-
-    path = os.path.join(base_path, "config.yaml")
-    if not os.path.exists(path):
-        fallback = os.path.join(os.getcwd(), "config.yaml")
-        return fallback
-    return path
-
-
-CONFIG_PATH = get_config_path()
-LOG_PATH = os.path.join(os.path.dirname(__file__), "watchdog.log")
-
-# --- Rotating Log Setup ---
 from logging.handlers import RotatingFileHandler
-
-# --- Rotating Log Setup ---
-from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from winotify import Notification
 
-LOG_PATH = os.path.join(os.path.dirname(__file__), "watchdog.log")
+
+def get_settings_path():
+    if os.name == "nt":
+        base = Path(os.getenv("APPDATA", Path.home())) / "CloudflareWatchdog"
+    else:
+        base = Path.home() / ".config" / "cloudflare-watchdog"
+    base.mkdir(parents=True, exist_ok=True)
+    return base / "settings.json"
+
+
+LOG_PATH = Path(__file__).parent / "watchdog.log"
 logger = logging.getLogger("watchdog")
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler(
     LOG_PATH, maxBytes=1024 * 1024, backupCount=3, encoding="utf-8"
 )
+logger.addHandler(handler)
 
 
 class WatchdogCore:
     def __init__(self):
-        self.config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+        self.settings_path = get_settings_path()
         self.running = False
-        self.load_config()
+        self.settings = self.load_settings()
 
-    def load_config(self):
-        import yaml
+    def load_settings(self):
+        if self.settings_path.exists():
+            try:
+                with open(self.settings_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load settings: {e}")
+        defaults = {
+            "target_url": "https://example.com",
+            "check_interval": 30,
+            "retries": 3,
+        }
+        self.save_settings(defaults)
+        return defaults
 
+    def save_settings(self, data=None):
+        data = data or self.settings
         try:
-            if not os.path.exists(self.config_path):
-                default_cfg = {
-                    "target_url": "https://example.com",
-                    "check_interval": 30,
-                    "retries": 3,
-                }
-                with open(self.config_path, "w", encoding="utf-8") as f:
-                    yaml.dump(default_cfg, f)
-                self.config = default_cfg
-            else:
-                with open(self.config_path, "r", encoding="utf-8") as f:
-                    self.config = yaml.safe_load(f) or {}
+            with open(self.settings_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
         except Exception as e:
-            self.config = {}
-            logger.error(f"Failed to load config: {e}")
+            logger.error(f"Failed to save settings: {e}")
 
     def log(self, msg):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -78,16 +69,14 @@ class WatchdogCore:
             pass
 
     def start(self, log_callback=None):
-        import time, requests
-
         self.running = True
         self.log("🔍 Starting watchdog monitor loop...")
         while self.running:
             try:
-                self.load_config()
-                url = self.config.get("target_url", "https://example.com")
-                interval = int(self.config.get("check_interval", 30))
-                retries = int(self.config.get("retries", 3))
+                self.settings = self.load_settings()
+                url = self.settings.get("target_url", "https://example.com")
+                interval = int(self.settings.get("check_interval", 30))
+                retries = int(self.settings.get("retries", 3))
 
                 success = False
                 for i in range(retries):
@@ -104,9 +93,11 @@ class WatchdogCore:
                     msg = f"✅ Site online: {url}"
                 else:
                     msg = f"⚠️ Site appears down after {retries} attempts: {url}"
+
                 self.log(msg)
                 if log_callback:
                     log_callback(msg)
+
                 time.sleep(interval)
 
             except Exception as e:
