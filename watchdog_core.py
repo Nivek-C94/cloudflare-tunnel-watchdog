@@ -87,17 +87,29 @@ class WatchdogCore:
                             break
                     except Exception:
                         pass
-                    time.sleep(2)
-
                 if success:
                     msg = f"✅ Site online: {url}"
                 else:
                     msg = f"⚠️ Site appears down after {retries} attempts: {url}"
 
+                    # --- Recovery commands ---
+                    import subprocess
+
+                    for command in self.settings.get("on_fail", []):
+                        self.log(f"⚙️ Running recovery command: {command}")
+                        try:
+                            subprocess.run(command, shell=True, check=True)
+                            self.log(f"✅ Command succeeded: {command}")
+                            if log_callback:
+                                log_callback(f"✅ Command succeeded: {command}")
+                        except subprocess.CalledProcessError as e:
+                            self.log(f"❌ Command failed ({command}): {e}")
+                            if log_callback:
+                                log_callback(f"❌ Command failed ({command}): {e}")
+
                 self.log(msg)
                 if log_callback:
                     log_callback(msg)
-
                 time.sleep(interval)
 
             except Exception as e:
