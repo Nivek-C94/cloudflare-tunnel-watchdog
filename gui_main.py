@@ -36,11 +36,10 @@ class WatchdogGUI(QMainWindow):
         # --- Tabs ---
         self.tabs = QTabWidget()
         self.monitor_tab = QWidget()
-        self.config_tab = QWidget()
         self.dashboard_tab = QWidget()
 
         self.tabs.addTab(self.monitor_tab, "Monitor")
-        self.tabs.addTab(self.config_tab, "Config")
+        self.tabs.addTab(self.dashboard_tab, "Dashboard")
         self.config_editor = QTextEdit()
         try:
             with open(self.core.config_path, "r") as f:
@@ -53,8 +52,9 @@ class WatchdogGUI(QMainWindow):
         self.text_area.setReadOnly(True)
         self.start_btn = QPushButton("Start")
         self.stop_btn = QPushButton("Stop")
-        self.reload_btn = QPushButton("Reload Config")
+        self.reload_btn = QPushButton("Reload")
         self.viewlog_btn = QPushButton("View Log")
+        self.settings_btn = QPushButton("Settings")
 
         vbox = QVBoxLayout()
         for w in [
@@ -64,6 +64,7 @@ class WatchdogGUI(QMainWindow):
             self.stop_btn,
             self.reload_btn,
             self.viewlog_btn,
+            self.settings_btn,
         ]:
             vbox.addWidget(w)
         self.monitor_tab.setLayout(vbox)
@@ -116,7 +117,7 @@ class WatchdogGUI(QMainWindow):
         self.stop_btn.clicked.connect(self.stop_watchdog)
         self.reload_btn.clicked.connect(self.reload_config)
         self.viewlog_btn.clicked.connect(self.view_log)
-        self.save_config_btn.clicked.connect(self.save_config)
+        self.settings_btn.clicked.connect(self.open_settings)
 
     def start_watchdog(self):
         if not self.thread or not self.thread.is_alive():
@@ -185,6 +186,18 @@ class WatchdogGUI(QMainWindow):
             pass
         QApplication.quit()
         event.accept()
+
+    def view_log(self):
+        import os, subprocess
+
+        log_path = os.path.join(os.path.dirname(__file__), "watchdog.log")
+        if os.path.exists(log_path):
+            try:
+                os.startfile(log_path)
+            except Exception:
+                subprocess.Popen(["xdg-open", log_path])
+        else:
+            self.log_message("⚠️ Log file not found.")
 
 
 if __name__ == "__main__":
