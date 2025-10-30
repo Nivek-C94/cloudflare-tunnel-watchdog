@@ -113,9 +113,16 @@ class WatchdogCore:
                 time.sleep(interval)
 
             except Exception as e:
-                self.log(f"❌ Watchdog encountered error: {e}")
-                time.sleep(5)
+                self.log(f"❌ Watchdog encountered an error: {e}")
+
+        # --- Control Methods ---
 
     def stop(self):
+        """Stop the watchdog loop."""
         self.running = False
         self.log("🛑 Watchdog stopped.")
+
+    def reload_settings(self):
+        """Reload settings from disk."""
+        self.settings = self.load_settings()
+        self.log("🔄 Settings reloaded.")
