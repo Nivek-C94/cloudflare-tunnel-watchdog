@@ -113,6 +113,11 @@ class WatchdogGUI(QMainWindow):
         self.viewlog_btn.clicked.connect(self.view_log)
         self.settings_btn.clicked.connect(self.open_settings)
 
+    def log_message(self, msg: str):
+        self.text_area.append(msg)
+        self.text_area.ensureCursorVisible()
+        self.tray.setToolTip(f"Cloudflare Watchdog – {msg[:60]}")
+
     def start_watchdog(self):
         if not self.thread or not self.thread.is_alive():
             from threading import Thread
