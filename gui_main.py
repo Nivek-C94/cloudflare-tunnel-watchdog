@@ -107,6 +107,8 @@ class WatchdogGUI(QMainWindow):
         tray_menu = QMenu()
         tray_menu.addAction("Start", self.start_watchdog)
         tray_menu.addAction("Stop", self.stop_watchdog)
+        tray_menu.addAction("Settings", self.open_settings)
+        tray_menu.addAction("View Log", self.view_log)
         tray_menu.addAction("Restore", self.showNormal)
         tray_menu.addAction("Exit", QApplication.quit)
         self.tray.setContextMenu(tray_menu)
