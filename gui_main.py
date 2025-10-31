@@ -251,18 +251,6 @@ class WatchdogGUI(QMainWindow):
 
         dialog.accept()
 
-        self.core.reload_settings()
-        self.log_message("✅ Reloaded latest settings before starting watchdog.")
-        self.core.settings = self.core.load_settings()
-        self.log_message("🔁 Settings loaded before starting watchdog.")
-        if not hasattr(self, "thread") or not self.thread.is_alive():
-            self.thread = Thread(target=self.core.start, args=(self.log_message,))
-            self.thread.daemon = True
-            self.thread.start()
-            self.status_label.setText("Status: Running 🟢")
-            self.tray.setToolTip("Cloudflare Watchdog - Online 🟢")
-            self.log_message("▶️ Watchdog started.")
-
     def view_log(self):
         import os, subprocess
 
