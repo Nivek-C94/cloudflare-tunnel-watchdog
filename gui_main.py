@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QSystemTrayIcon,
     QSpinBox,
+    QMenu,  # Added missing import
 )
 from threading import Thread
 from watchdog_core import WatchdogCore
