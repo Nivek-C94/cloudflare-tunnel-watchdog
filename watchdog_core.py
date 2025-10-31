@@ -81,38 +81,36 @@ class WatchdogCore:
                 msg = None  # Predefine message to avoid unbound errors
                 success = False  # Predefine success flag
                 try:
-                    r = requests.get(url, timeout=10)
-                    if r.status_code == 200:
+                    r = requests.get(url, timeout=5)
+                    if r.status_code == 200 and r.text.strip():
                         msg = f"✅ Site online: {url}"
                         success = True
                     else:
-                        msg = f"⚠️ Unexpected status: {r.status_code}"
+                        msg = f"⚠️ Site reachable but not responding correctly (status {r.status_code})"
+                        success = False
+                except requests.ConnectionError:
+                    msg = f"❌ Connection failed: {url}"
+                    success = False
+                except requests.Timeout:
+                    msg = f"⏱️ Connection timed out: {url}"
+                    success = False
                 except Exception as e:
-                    self.log(f"❌ Watchdog encountered an error: {e}")
-                    if msg:
-                        self.log(msg)
-                    else:
-                        self.log(
-                            "⚠️ No status message available — request failed before response."
-                        )
-                    msg = f"✅ Site online: {url}"
-                    # --- Run On Recovery Commands ---
-                    if self.settings.get("on_recovery"):
-                        import subprocess
+                    msg = f"❌ Unexpected error: {e}"
+                    success = False
 
-                        for command in self.settings.get("on_recovery", []):
-                            self.log(f"🔁 Running on-recovery command: {command}")
-                            try:
-                                subprocess.run(command, shell=True, check=True)
-                                self.log(f"✅ Command succeeded: {command}")
-                                if log_callback:
-                                    log_callback(f"✅ Command succeeded: {command}")
-                            except subprocess.CalledProcessError as e:
-                                self.log(f"❌ Command failed ({command}): {e}")
-                                if log_callback:
-                                    log_callback(f"❌ Command failed ({command}): {e}")
+                import subprocess
 
-                if log_callback:
+                for command in self.settings.get("on_recovery", []):
+                    self.log(f"🔁 Running on-recovery command: {command}")
+                    try:
+                        subprocess.run(command, shell=True, check=True)
+                        self.log(f"✅ Command succeeded: {command}")
+                        if log_callback:
+                            log_callback(f"✅ Command succeeded: {command}")
+                    except subprocess.CalledProcessError as e:
+                        self.log(f"❌ Command failed ({command}): {e}")
+                        if log_callback:
+                            log_callback(f"❌ Command failed ({command}): {e}")
                     log_callback(msg)
                 time.sleep(interval)
 
