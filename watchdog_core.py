@@ -112,37 +112,6 @@ class WatchdogCore:
                                 if log_callback:
                                     log_callback(f"❌ Command failed ({command}): {e}")
 
-                    import subprocess
-
-                    # Distinguish between site and Wi-Fi failures
-                    if "requests.exceptions.ConnectionError" in str(locals()):
-                        recovery_type = "on_wifi_fail"
-                        self.log("📡 Wi-Fi connectivity appears to be down.")
-                    else:
-                        recovery_type = "on_site_fail"
-                        self.log("🌐 Target site appears to be down.")
-
-                    recovery_cmds = self.settings.get(recovery_type, [])
-                    if not recovery_cmds:
-                        recovery_cmds = self.settings.get(
-                            "on_fail", []
-                        )  # fallback legacy key
-
-                    for command in recovery_cmds:
-                        self.log(
-                            f"⚙️ Running recovery command ({recovery_type}): {command}"
-                        )
-                        try:
-                            subprocess.run(command, shell=True, check=True)
-                            self.log(f"✅ Command succeeded: {command}")
-                            if log_callback:
-                                log_callback(f"✅ Command succeeded: {command}")
-                        except subprocess.CalledProcessError as e:
-                            self.log(f"❌ Command failed ({command}): {e}")
-                            if log_callback:
-                                log_callback(f"❌ Command failed ({command}): {e}")
-
-                self.log(msg)
                 if log_callback:
                     log_callback(msg)
                 time.sleep(interval)
