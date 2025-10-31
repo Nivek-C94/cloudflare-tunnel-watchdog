@@ -57,22 +57,26 @@ class WatchdogGUI(QMainWindow):
             if os.path.exists(test_path):
                 icon_path = test_path
                 break
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-        if icon_path:
-            print(f"🖼️ Loaded custom icon: {os.path.basename(icon_path)}")
-            icon = QIcon(icon_path)
-        else:
-            print("⚠️ App logo not found, using default tray icon.")
-            icon = QIcon()
-        self.update_btn = QPushButton("Check for Update")
+        self.figure = Figure(figsize=(5, 3))
+        self.canvas = FigureCanvas(self.figure)
+
         dash_layout = QVBoxLayout()
         dash_layout.addWidget(self.canvas)
-        dash_layout.addWidget(self.update_btn)
-        self.dashboard_tab.setLayout(dash_layout)
 
-        self.timestamps = []
-        self.statuses = []
+        # Remove unused buttons variable
+        save_button = QPushButton("Save")
+        cancel_button = QPushButton("Cancel")
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(cancel_button)
+        dash_layout.addLayout(button_layout)
 
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(dash_layout)
+        self.setLayout(main_layout)
         # --- Main Layout ---
         self.setCentralWidget(self.tabs)
         self.core = WatchdogCore()
