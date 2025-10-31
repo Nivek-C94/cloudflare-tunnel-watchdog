@@ -164,17 +164,25 @@ class WatchdogGUI(QMainWindow):
             settings.get("retry_threshold", settings.get("retries", 3))
         )
 
+        # --- Recovery Commands Section ---
+        recovery_label = QLabel("<b>Recovery Commands</b>")
+        layout.addRow(recovery_label)
+
         site_recovery_input = QTextEdit()
         site_recovery_input.setPlainText("\n".join(settings.get("on_site_fail", [])))
 
         wifi_recovery_input = QTextEdit()
         wifi_recovery_input.setPlainText("\n".join(settings.get("on_wifi_fail", [])))
 
+        on_recovery_input = QTextEdit()
+        on_recovery_input.setPlainText("\n".join(settings.get("on_recovery", [])))
+
         layout.addRow("Target URL", target_input)
         layout.addRow("Check Interval (s)", interval_input)
         layout.addRow("Retry Threshold", retry_threshold_input)
-        layout.addRow("Site Down Recovery (one per line)", site_recovery_input)
-        layout.addRow("Wi-Fi Down Recovery (one per line)", wifi_recovery_input)
+        layout.addRow("Site Down (one per line)", site_recovery_input)
+        layout.addRow("Wi-Fi Down (one per line)", wifi_recovery_input)
+        layout.addRow("On Recovery (one per line)", on_recovery_input)
 
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(
@@ -182,11 +190,54 @@ class WatchdogGUI(QMainWindow):
                 dialog,
                 target_input.text(),
                 interval_input.value(),
-                retries_input.value(),
-                recovery_input.toPlainText(),
+                retry_threshold_input.value(),
+                site_recovery_input.toPlainText(),
+                wifi_recovery_input.toPlainText(),
+                on_recovery_input.toPlainText(),
             )
         )
         layout.addWidget(save_btn)
+
+        dialog.setLayout(layout)
+        # Show settings dialog once and reload after it closes
+        dialog.exec()
+        self.core.reload_settings()
+        self.log_message("🔄 Settings reloaded after closing settings menu.")
+
+    def save_settings(
+        self,
+        dialog,
+        target_url,
+        interval,
+        retry_threshold,
+        site_recovery_text,
+        wifi_recovery_text,
+        on_recovery_text,
+    ):
+        self.core.settings.update(
+            {
+                "target_url": target_url,
+                "check_interval": interval,
+                "retry_threshold": retry_threshold,
+                "on_site_fail": [
+                    cmd.strip()
+                    for cmd in site_recovery_text.splitlines()
+                    if cmd.strip()
+                ],
+                "on_wifi_fail": [
+                    cmd.strip()
+                    for cmd in wifi_recovery_text.splitlines()
+                    if cmd.strip()
+                ],
+                "on_recovery": [
+                    cmd.strip() for cmd in on_recovery_text.splitlines() if cmd.strip()
+                ],
+            }
+        )
+        self.core.save_settings()
+        self.core.settings = self.core.load_settings()
+        self.log_message("💾 Settings saved and reloaded.")
+        dialog.accept()
 
         dialog.setLayout(layout)
         # Show settings dialog once and reload after it closes
