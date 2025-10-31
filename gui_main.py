@@ -47,27 +47,23 @@ class WatchdogGUI(QMainWindow):
         self.stop_btn = QPushButton("Stop")
         # self.reload_btn = QPushButton('Reload')  # removed, no longer needed
         self.viewlog_btn = QPushButton("View Log")
-        self.settings_btn = QPushButton("Settings")
+        # --- Smart Icon Loader ---
+        base_dir = os.path.dirname(__file__)
+        possible_icons = ["icon.ico", "icon.png", "logo.ico", "logo.png"]
 
-        vbox = QVBoxLayout()
-        for w in [
-            self.status_label,
-            self.text_area,
-            self.start_btn,
-            self.stop_btn,
-            # self.reload_btn,
-            self.viewlog_btn,
-            self.settings_btn,
-        ]:
-            vbox.addWidget(w)
-        self.monitor_tab.setLayout(vbox)
+        icon_path = None
+        for name in possible_icons:
+            test_path = os.path.join(base_dir, name)
+            if os.path.exists(test_path):
+                icon_path = test_path
+                break
 
-        # --- Dashboard Tab ---
-        import matplotlib.pyplot as plt
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
-        self.figure, self.ax = plt.subplots()
-        self.canvas = FigureCanvas(self.figure)
+        if icon_path:
+            print(f"🖼️ Loaded custom icon: {os.path.basename(icon_path)}")
+            icon = QIcon(icon_path)
+        else:
+            print("⚠️ App logo not found, using default tray icon.")
+            icon = QIcon()
         self.update_btn = QPushButton("Check for Update")
         dash_layout = QVBoxLayout()
         dash_layout.addWidget(self.canvas)
