@@ -159,15 +159,22 @@ class WatchdogGUI(QMainWindow):
         target_input = QLineEdit(settings.get("target_url", ""))
         interval_input = QSpinBox()
         interval_input.setValue(settings.get("check_interval", 30))
-        retries_input = QSpinBox()
-        retries_input.setValue(settings.get("retries", 3))
-        recovery_input = QTextEdit()
-        recovery_input.setPlainText("\n".join(settings.get("on_fail", [])))
+        retry_threshold_input = QSpinBox()
+        retry_threshold_input.setValue(
+            settings.get("retry_threshold", settings.get("retries", 3))
+        )
+
+        site_recovery_input = QTextEdit()
+        site_recovery_input.setPlainText("\n".join(settings.get("on_site_fail", [])))
+
+        wifi_recovery_input = QTextEdit()
+        wifi_recovery_input.setPlainText("\n".join(settings.get("on_wifi_fail", [])))
 
         layout.addRow("Target URL", target_input)
         layout.addRow("Check Interval (s)", interval_input)
-        layout.addRow("Retries", retries_input)
-        layout.addRow("Recovery Commands (one per line)", recovery_input)
+        layout.addRow("Retry Threshold", retry_threshold_input)
+        layout.addRow("Site Down Recovery (one per line)", site_recovery_input)
+        layout.addRow("Wi-Fi Down Recovery (one per line)", wifi_recovery_input)
 
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(
