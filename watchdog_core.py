@@ -79,10 +79,12 @@ class WatchdogCore:
                 retries = int(self.settings.get("retries", 3))
 
                 msg = None  # Predefine message to avoid unbound errors
+                success = False  # Predefine success flag
                 try:
                     r = requests.get(url, timeout=10)
                     if r.status_code == 200:
                         msg = f"✅ Site online: {url}"
+                        success = True
                     else:
                         msg = f"⚠️ Unexpected status: {r.status_code}"
                 except Exception as e:
@@ -93,7 +95,6 @@ class WatchdogCore:
                         self.log(
                             "⚠️ No status message available — request failed before response."
                         )
-                if success:
                     msg = f"✅ Site online: {url}"
                     # --- Run On Recovery Commands ---
                     if self.settings.get("on_recovery"):
