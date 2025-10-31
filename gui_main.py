@@ -182,9 +182,10 @@ class WatchdogGUI(QMainWindow):
         layout.addWidget(save_btn)
 
         dialog.setLayout(layout)
+        # Show settings dialog once and reload after it closes
+        dialog.exec()
         self.core.reload_settings()
         self.log_message("🔄 Settings reloaded after closing settings menu.")
-        self.open_settings()
 
     def save_settings(self, dialog, target_url, interval, retries, recovery_text):
         self.core.settings.update(
