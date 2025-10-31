@@ -257,22 +257,6 @@ class WatchdogGUI(QMainWindow):
         self.core.reload_settings()
         self.log_message("🔄 Settings reloaded after closing settings menu.")
 
-    def save_settings(self, dialog, target_url, interval, retries, recovery_text):
-        self.core.settings.update(
-            {
-                "target_url": target_url,
-                "check_interval": interval,
-                "retries": retries,
-                "on_fail": [
-                    cmd.strip() for cmd in recovery_text.splitlines() if cmd.strip()
-                ],
-            }
-        )
-        self.core.save_settings()
-        self.core.settings = self.core.load_settings()
-        self.log_message("💾 Settings saved and reloaded.")
-        dialog.accept()
-
         self.core.reload_settings()
         self.log_message("✅ Reloaded latest settings before starting watchdog.")
         self.core.settings = self.core.load_settings()
