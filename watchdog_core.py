@@ -89,8 +89,21 @@ class WatchdogCore:
                         pass
                 if success:
                     msg = f"✅ Site online: {url}"
-                else:
-                    msg = f"⚠️ Site appears down after {retries} attempts: {url}"
+                    # --- Run On Recovery Commands ---
+                    if self.settings.get("on_recovery"):
+                        import subprocess
+
+                        for command in self.settings.get("on_recovery", []):
+                            self.log(f"🔁 Running on-recovery command: {command}")
+                            try:
+                                subprocess.run(command, shell=True, check=True)
+                                self.log(f"✅ Command succeeded: {command}")
+                                if log_callback:
+                                    log_callback(f"✅ Command succeeded: {command}")
+                            except subprocess.CalledProcessError as e:
+                                self.log(f"❌ Command failed ({command}): {e}")
+                                if log_callback:
+                                    log_callback(f"❌ Command failed ({command}): {e}")
 
                     import subprocess
 
