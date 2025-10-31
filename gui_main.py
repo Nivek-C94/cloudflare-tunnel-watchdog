@@ -6,14 +6,14 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QPushButton,
     QVBoxLayout,
+    QHBoxLayout,  # Added missing layout import
     QWidget,
     QLabel,
     QTabWidget,
     QSystemTrayIcon,
     QSpinBox,
-    QMenu,  # Added missing import
+    QMenu,
 )
-from threading import Thread
 from watchdog_core import WatchdogCore
 
 
