@@ -251,12 +251,6 @@ class WatchdogGUI(QMainWindow):
 
         dialog.accept()
 
-        dialog.setLayout(layout)
-        # Show settings dialog once and reload after it closes
-        dialog.exec()
-        self.core.reload_settings()
-        self.log_message("🔄 Settings reloaded after closing settings menu.")
-
         self.core.reload_settings()
         self.log_message("✅ Reloaded latest settings before starting watchdog.")
         self.core.settings = self.core.load_settings()
