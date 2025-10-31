@@ -78,15 +78,21 @@ class WatchdogCore:
                 interval = int(self.settings.get("check_interval", 30))
                 retries = int(self.settings.get("retries", 3))
 
-                success = False
-                for i in range(retries):
-                    try:
-                        r = requests.get(url, timeout=10)
-                        if r.status_code == 200:
-                            success = True
-                            break
-                    except Exception:
-                        pass
+                msg = None  # Predefine message to avoid unbound errors
+                try:
+                    r = requests.get(url, timeout=10)
+                    if r.status_code == 200:
+                        msg = f"✅ Site online: {url}"
+                    else:
+                        msg = f"⚠️ Unexpected status: {r.status_code}"
+                except Exception as e:
+                    self.log(f"❌ Watchdog encountered an error: {e}")
+                    if msg:
+                        self.log(msg)
+                    else:
+                        self.log(
+                            "⚠️ No status message available — request failed before response."
+                        )
                 if success:
                     msg = f"✅ Site online: {url}"
                     # --- Run On Recovery Commands ---
