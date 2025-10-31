@@ -237,6 +237,18 @@ class WatchdogGUI(QMainWindow):
         self.core.save_settings()
         self.core.settings = self.core.load_settings()
         self.log_message("💾 Settings saved and reloaded.")
+
+        # ✅ Tray confirmation message
+        try:
+            self.tray.showMessage(
+                "✅ Settings Saved",
+                "Your configuration changes were saved successfully.",
+                QSystemTrayIcon.MessageIcon.Information,
+                3000,
+            )
+        except Exception:
+            pass
+
         dialog.accept()
 
         dialog.setLayout(layout)
