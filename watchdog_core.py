@@ -92,11 +92,26 @@ class WatchdogCore:
                 else:
                     msg = f"⚠️ Site appears down after {retries} attempts: {url}"
 
-                    # --- Recovery commands ---
                     import subprocess
 
-                    for command in self.settings.get("on_fail", []):
-                        self.log(f"⚙️ Running recovery command: {command}")
+                    # Distinguish between site and Wi-Fi failures
+                    if "requests.exceptions.ConnectionError" in str(locals()):
+                        recovery_type = "on_wifi_fail"
+                        self.log("📡 Wi-Fi connectivity appears to be down.")
+                    else:
+                        recovery_type = "on_site_fail"
+                        self.log("🌐 Target site appears to be down.")
+
+                    recovery_cmds = self.settings.get(recovery_type, [])
+                    if not recovery_cmds:
+                        recovery_cmds = self.settings.get(
+                            "on_fail", []
+                        )  # fallback legacy key
+
+                    for command in recovery_cmds:
+                        self.log(
+                            f"⚙️ Running recovery command ({recovery_type}): {command}"
+                        )
                         try:
                             subprocess.run(command, shell=True, check=True)
                             self.log(f"✅ Command succeeded: {command}")
