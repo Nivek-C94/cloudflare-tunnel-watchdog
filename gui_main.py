@@ -152,14 +152,30 @@ class WatchdogGUI(QMainWindow):
         layout.addRow("Check Interval (s)", interval_input)
 
         # Recovery command sections
+        # Recovery command sections (single-line with horizontal scroll)
         site_down_input = QTextEdit()
         site_down_input.setPlainText("\n".join(settings.get("on_site_fail", [])))
+        site_down_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        site_down_input.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        site_down_input.setFixedHeight(60)
 
         wifi_down_input = QTextEdit()
         wifi_down_input.setPlainText("\n".join(settings.get("on_wifi_fail", [])))
+        wifi_down_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        wifi_down_input.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        wifi_down_input.setFixedHeight(60)
 
         recovery_input = QTextEdit()
         recovery_input.setPlainText("\n".join(settings.get("on_recovery", [])))
+        recovery_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        recovery_input.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        recovery_input.setFixedHeight(60)
 
         layout.addRow("Site Down (one per line)", site_down_input)
         layout.addRow("Wi-Fi Down (one per line)", wifi_down_input)
