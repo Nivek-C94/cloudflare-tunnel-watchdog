@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 )
 import os
 
-from watchdog_core import WatchdogCore
+from cloudflare_watchdog.core.watchdog import WatchdogCore
 
 
 class WatchdogGUI(QMainWindow):
