@@ -98,56 +98,58 @@ class WatchdogCore:
                     msg = f"❌ Unexpected error: {e}"
                     success = False
 
-                import subprocess, platform, shlex
+                import subprocess, platform
 
-                for command in self.settings.get("on_recovery", []):
-                    self.log(f"🔁 Running on-recovery command: {command}")
-                    try:
-                        if platform.system() == "Windows":
-                            # Use PowerShell for robust Unicode and system command support
-                            completed = subprocess.run(
-                                [
-                                    "powershell",
-                                    "-ExecutionPolicy",
-                                    "Bypass",
-                                    "-Command",
-                                    command,
-                                ],
-                                capture_output=True,
-                                text=True,
-                                encoding="utf-8",
-                            )
-                        else:
-                            completed = subprocess.run(
-                                command,
-                                shell=True,
-                                capture_output=True,
-                                text=True,
-                                encoding="utf-8",
-                            )
+                def run_commands(command_list, label):
+                    for raw in command_list:
+                        if not raw.strip():
+                            continue
+                        commands = [
+                            c.strip()
+                            for c in raw.replace(";", "\n").splitlines()
+                            if c.strip()
+                        ]
+                        for command in commands:
+                            self.log(f"🔁 Running {label} command: {command}")
+                            try:
+                                if platform.system() == "Windows":
+                                    completed = subprocess.run(
+                                        [
+                                            "powershell",
+                                            "-NoProfile",
+                                            "-ExecutionPolicy",
+                                            "Bypass",
+                                            "-Command",
+                                            f"& {{ {command} }}",
+                                        ],
+                                        capture_output=True,
+                                        text=True,
+                                        encoding="utf-8",
+                                    )
+                                else:
+                                    completed = subprocess.run(
+                                        ["/bin/bash", "-c", command],
+                                        capture_output=True,
+                                        text=True,
+                                        encoding="utf-8",
+                                    )
 
-                        if completed.returncode == 0:
-                            self.log(f"✅ Command succeeded: {command}")
-                            if completed.stdout:
-                                self.log(completed.stdout.strip())
-                            if log_callback:
-                                log_callback(f"✅ Command succeeded: {command}")
-                        else:
-                            self.log(
-                                f"❌ Command failed ({command}) → Exit {completed.returncode}"
-                            )
-                            if completed.stderr:
-                                self.log(completed.stderr.strip())
-                            if log_callback:
-                                log_callback(
-                                    f"❌ Command failed: {completed.stderr.strip()}"
-                                )
+                                if completed.returncode == 0:
+                                    self.log(f"✅ Command succeeded: {command}")
+                                    if completed.stdout:
+                                        self.log(completed.stdout.strip())
+                                else:
+                                    self.log(
+                                        f"❌ Command failed ({command}) → Exit {completed.returncode}"
+                                    )
+                                    if completed.stderr:
+                                        self.log(completed.stderr.strip())
+                            except Exception as e:
+                                self.log(f"💥 Command error ({command}): {e}")
 
-                    except Exception as e:
-                        self.log(f"💥 Command error ({command}): {e}")
-                        if log_callback:
-                            log_callback(f"💥 Command error ({command}): {e}")
-                    log_callback(msg)
+                run_commands(self.settings.get("on_site_fail", []), "on-site-fail")
+                run_commands(self.settings.get("on_wifi_fail", []), "on-wifi-fail")
+                run_commands(self.settings.get("on_recovery", []), "on-recovery")
                 time.sleep(interval)
 
             except Exception as e:
