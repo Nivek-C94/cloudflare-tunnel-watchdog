@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QPushButton,
     QVBoxLayout,
-    QHBoxLayout,  # Added missing layout import
+    QHBoxLayout,
     QWidget,
     QLabel,
     QTabWidget,
@@ -36,10 +36,18 @@ class WatchdogGUI(QMainWindow):
         self.tabs = QTabWidget()
         self.monitor_tab = QWidget()
         self.dashboard_tab = QWidget()
-
         self.tabs.addTab(self.monitor_tab, "Monitor")
         self.tabs.addTab(self.dashboard_tab, "Dashboard")
+
         # --- Monitor Tab Layout ---
+        self.status_label = QLabel("Status: Idle")
+        self.text_area = QTextEdit(self)
+        self.text_area.setReadOnly(True)
+        self.start_btn = QPushButton("Start")
+        self.stop_btn = QPushButton("Stop")
+        self.viewlog_btn = QPushButton("View Log")
+        self.settings_btn = QPushButton("Settings")
+
         monitor_layout = QVBoxLayout()
         monitor_layout.addWidget(self.status_label)
         monitor_layout.addWidget(self.text_area)
@@ -48,15 +56,18 @@ class WatchdogGUI(QMainWindow):
         button_row.addWidget(self.start_btn)
         button_row.addWidget(self.stop_btn)
         button_row.addWidget(self.viewlog_btn)
-
-        # Settings button for configuration dialog
-        self.settings_btn = QPushButton("Settings")
         button_row.addWidget(self.settings_btn)
 
         monitor_layout.addLayout(button_row)
         self.monitor_tab.setLayout(monitor_layout)
 
         # --- Dashboard Tab Layout ---
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+        self.figure = Figure(figsize=(5, 3))
+        self.canvas = FigureCanvas(self.figure)
+
         dash_layout = QVBoxLayout()
         dash_layout.addWidget(self.canvas)
 
@@ -73,8 +84,6 @@ class WatchdogGUI(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.core = WatchdogCore()
         self.thread = None
-        self.core = WatchdogCore()
-        self.thread = None
 
         # --- System Tray Icon with Fallback ---
         icon_path = os.path.join(base_path, "cloudflare_watchdog_logo.png")
@@ -87,6 +96,7 @@ class WatchdogGUI(QMainWindow):
         else:
             tray_icon = QSystemTrayIcon(QIcon(icon_path))
             self.tray = tray_icon
+
         tray_menu = QMenu()
         tray_menu.addAction("Start", self.start_watchdog)
         tray_menu.addAction("Stop", self.stop_watchdog)
@@ -100,7 +110,6 @@ class WatchdogGUI(QMainWindow):
         # --- Bind Buttons ---
         self.start_btn.clicked.connect(self.start_watchdog)
         self.stop_btn.clicked.connect(self.stop_watchdog)
-        # self.reload_btn.clicked.connect(self.reload_config)  # Removed - now handled automatically
         self.viewlog_btn.clicked.connect(self.view_log)
         self.settings_btn.clicked.connect(self.open_settings)
 
@@ -128,125 +137,28 @@ class WatchdogGUI(QMainWindow):
 
     def open_settings(self):
         settings = self.core.settings
-        from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QDialogButtonBox
+        from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Settings")
         layout = QFormLayout(dialog)
 
         url_input = QLineEdit(settings.get("target_url", ""))
-        interval_input = QLineEdit(str(settings.get("check_interval", 30)))
-        retries_input = QLineEdit(str(settings.get("retries", 3)))
+        interval_input = QSpinBox()
+        interval_input.setValue(settings.get("check_interval", 30))
 
         layout.addRow("Target URL", url_input)
         layout.addRow("Check Interval (s)", interval_input)
-        layout.addRow("Retries", retries_input)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Settings")
-        layout = QFormLayout(dialog)
-
-        target_input = QLineEdit(settings.get("target_url", ""))
-        interval_input = QSpinBox()
-        interval_input.setValue(settings.get("check_interval", 30))
-        retry_threshold_input = QSpinBox()
-        retry_threshold_input.setValue(
-            settings.get("retry_threshold", settings.get("retries", 3))
-        )
-
-        # --- Recovery Commands Section ---
-        recovery_label = QLabel("<b>Recovery Commands</b>")
-        layout.addRow(recovery_label)
-
-        site_recovery_input = QTextEdit()
-        site_recovery_input.setPlainText("\n".join(settings.get("on_site_fail", [])))
-
-        wifi_recovery_input = QTextEdit()
-        wifi_recovery_input.setPlainText("\n".join(settings.get("on_wifi_fail", [])))
-
-        on_recovery_input = QTextEdit()
-        on_recovery_input.setPlainText("\n".join(settings.get("on_recovery", [])))
-
-        layout.addRow("Target URL", target_input)
-        layout.addRow("Check Interval (s)", interval_input)
-        layout.addRow("Retry Threshold", retry_threshold_input)
-        layout.addRow("Site Down (one per line)", site_recovery_input)
-        layout.addRow("Wi-Fi Down (one per line)", wifi_recovery_input)
-        layout.addRow("On Recovery (one per line)", on_recovery_input)
 
         save_btn = QPushButton("Save")
-        save_btn.clicked.connect(
-            lambda: self.save_settings(
-                dialog,
-                target_input.text(),
-                interval_input.value(),
-                retry_threshold_input.value(),
-                site_recovery_input.toPlainText(),
-                wifi_recovery_input.toPlainText(),
-                on_recovery_input.toPlainText(),
-            )
-        )
+        save_btn.clicked.connect(lambda: dialog.accept())
         layout.addWidget(save_btn)
 
         dialog.setLayout(layout)
-        # Show settings dialog once and reload after it closes
         dialog.exec()
-        self.core.reload_settings()
-        self.log_message("🔄 Settings reloaded after closing settings menu.")
-
-    def save_settings(
-        self,
-        dialog,
-        target_url,
-        interval,
-        retry_threshold,
-        site_recovery_text,
-        wifi_recovery_text,
-        on_recovery_text,
-    ):
-        self.core.settings.update(
-            {
-                "target_url": target_url,
-                "check_interval": interval,
-                "retry_threshold": retry_threshold,
-                "on_site_fail": [
-                    cmd.strip()
-                    for cmd in site_recovery_text.splitlines()
-                    if cmd.strip()
-                ],
-                "on_wifi_fail": [
-                    cmd.strip()
-                    for cmd in wifi_recovery_text.splitlines()
-                    if cmd.strip()
-                ],
-                "on_recovery": [
-                    cmd.strip() for cmd in on_recovery_text.splitlines() if cmd.strip()
-                ],
-            }
-        )
-        self.core.save_settings()
-        self.core.settings = self.core.load_settings()
-        self.log_message("💾 Settings saved and reloaded.")
-
-        # ✅ Tray confirmation message
-        try:
-            self.tray.showMessage(
-                "✅ Settings Saved",
-                "Your configuration changes were saved successfully.",
-                QSystemTrayIcon.MessageIcon.Information,
-                3000,
-            )
-        except Exception:
-            pass
-
-        dialog.accept()
 
     def view_log(self):
-        import os, subprocess
+        import subprocess
 
         log_path = os.path.join(os.path.dirname(__file__), "watchdog.log")
         if os.path.exists(log_path):
