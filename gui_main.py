@@ -15,6 +15,8 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QMenu,
 )
+import os
+
 from watchdog_core import WatchdogCore
 
 
