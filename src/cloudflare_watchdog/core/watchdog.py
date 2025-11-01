@@ -73,11 +73,9 @@ class WatchdogCore:
             try:
                 self.settings = self.load_settings()
                 url = self.settings.get("target_url", "https://example.com")
-                interval = int(self.settings.get("check_interval", 30))
-                retries = int(self.settings.get("retries", 3))
+                # Removed unused variables: retries and interval
 
                 msg = None  # Predefine message to avoid unbound errors
-                success = False  # Predefine success flag
                 try:
                     r = requests.get(url, timeout=5)
                     if r.status_code == 200 and r.text.strip():
