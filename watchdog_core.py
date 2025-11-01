@@ -112,7 +112,37 @@ class WatchdogCore:
                         for command in commands:
                             self.log(f"🔁 Running {label} command: {command}")
                             try:
+                                long_running = any(
+                                    keyword in command.lower()
+                                    for keyword in [
+                                        "cloudflared tunnel run",
+                                        "pm2 start",
+                                        "node",
+                                        "npm run",
+                                        "python",
+                                    ]
+                                )
+
                                 if platform.system() == "Windows":
+                                    if long_running:
+                                        subprocess.Popen(
+                                            [
+                                                "powershell",
+                                                "-NoProfile",
+                                                "-ExecutionPolicy",
+                                                "Bypass",
+                                                "-Command",
+                                                f"& {{ {command} }}",
+                                            ],
+                                            stdout=subprocess.DEVNULL,
+                                            stderr=subprocess.DEVNULL,
+                                            shell=True,
+                                        )
+                                        self.log(
+                                            f"🚀 Background process started: {command}"
+                                        )
+                                        continue
+
                                     completed = subprocess.run(
                                         [
                                             "powershell",
@@ -128,6 +158,17 @@ class WatchdogCore:
                                         timeout=15,
                                     )
                                 else:
+                                    if long_running:
+                                        subprocess.Popen(
+                                            ["/bin/bash", "-c", command],
+                                            stdout=subprocess.DEVNULL,
+                                            stderr=subprocess.DEVNULL,
+                                        )
+                                        self.log(
+                                            f"🚀 Background process started: {command}"
+                                        )
+                                        continue
+
                                     completed = subprocess.run(
                                         ["/bin/bash", "-c", command],
                                         capture_output=True,
@@ -154,9 +195,6 @@ class WatchdogCore:
                 run_commands(self.settings.get("on_site_fail", []), "on-site-fail")
                 run_commands(self.settings.get("on_wifi_fail", []), "on-wifi-fail")
                 run_commands(self.settings.get("on_recovery", []), "on-recovery")
-                run_commands(self.settings.get("on_wifi_fail", []), "on-wifi-fail")
-                run_commands(self.settings.get("on_recovery", []), "on-recovery")
-                time.sleep(interval)
 
             except Exception as e:
                 self.log(f"❌ Watchdog encountered an error: {e}")
