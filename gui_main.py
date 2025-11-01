@@ -198,43 +198,36 @@ class WatchdogGUI(QMainWindow):
         dialog.setLayout(layout)
         dialog.exec()
 
-    def save_settings(
-        self,
-        dialog,
-        target_url,
-        interval,
-        site_down_text,
-        wifi_down_text,
-        recovery_text,
-    ):
-        self.core.settings.update(
-            {
-                "target_url": target_url,
-                "check_interval": interval,
-                "on_site_fail": [
-                    cmd.strip() for cmd in site_down_text.splitlines() if cmd.strip()
-                ],
-                "on_wifi_fail": [
-                    cmd.strip() for cmd in wifi_down_text.splitlines() if cmd.strip()
-                ],
-                "on_recovery": [
-                    cmd.strip() for cmd in recovery_text.splitlines() if cmd.strip()
-                ],
-            }
+    def save_settings(self):
+        """Save settings without resetting to defaults."""
+        self.core.settings["target_url"] = (
+            self.url_edit.text().strip() if hasattr(self, "url_edit") else ""
         )
-        self.core.save_settings()
-        self.core.reload_settings()
-        self.log_message("💾 Settings updated and reloaded.")
+        self.core.settings["check_interval"] = (
+            int(self.interval_spin.value()) if hasattr(self, "interval_spin") else 30
+        )
+        self.core.settings["on_site_fail"] = (
+            self.site_fail_edit.toPlainText().splitlines()
+            if hasattr(self, "site_fail_edit")
+            else []
+        )
+        self.core.settings["on_wifi_fail"] = (
+            self.wifi_fail_edit.toPlainText().splitlines()
+            if hasattr(self, "wifi_fail_edit")
+            else []
+        )
+        self.core.settings["on_recovery"] = (
+            self.recovery_edit.toPlainText().splitlines()
+            if hasattr(self, "recovery_edit")
+            else []
+        )
+
         try:
-            self.tray.showMessage(
-                "✅ Settings Saved",
-                "Your configuration changes were saved successfully.",
-                QSystemTrayIcon.MessageIcon.Information,
-                3000,
-            )
-        except Exception:
-            pass
-        dialog.accept()
+            with open("settings.json", "w") as f:
+                json.dump(self.core.settings, f, indent=4)
+            self.log_message("💾 Settings saved successfully.")
+        except Exception as e:
+            self.log_message(f"❌ Failed to save settings: {e}")
 
     def view_log(self):
         import subprocess
