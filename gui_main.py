@@ -39,34 +39,27 @@ class WatchdogGUI(QMainWindow):
 
         self.tabs.addTab(self.monitor_tab, "Monitor")
         self.tabs.addTab(self.dashboard_tab, "Dashboard")
-        # --- Monitor Tab ---
-        self.status_label = QLabel("Status: Idle")
-        self.text_area = QTextEdit(self)
-        self.text_area.setReadOnly(True)
-        self.start_btn = QPushButton("Start")
-        self.stop_btn = QPushButton("Stop")
-        # self.reload_btn = QPushButton('Reload')  # removed, no longer needed
-        self.viewlog_btn = QPushButton("View Log")
-        # --- Smart Icon Loader ---
-        base_dir = os.path.dirname(__file__)
-        possible_icons = ["icon.ico", "icon.png", "logo.ico", "logo.png"]
+        # --- Monitor Tab Layout ---
+        monitor_layout = QVBoxLayout()
+        monitor_layout.addWidget(self.status_label)
+        monitor_layout.addWidget(self.text_area)
 
-        icon_path = None
-        for name in possible_icons:
-            test_path = os.path.join(base_dir, name)
-            if os.path.exists(test_path):
-                icon_path = test_path
-                break
-        from matplotlib.figure import Figure
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+        button_row = QHBoxLayout()
+        button_row.addWidget(self.start_btn)
+        button_row.addWidget(self.stop_btn)
+        button_row.addWidget(self.viewlog_btn)
 
-        self.figure = Figure(figsize=(5, 3))
-        self.canvas = FigureCanvas(self.figure)
+        # Settings button for configuration dialog
+        self.settings_btn = QPushButton("Settings")
+        button_row.addWidget(self.settings_btn)
 
+        monitor_layout.addLayout(button_row)
+        self.monitor_tab.setLayout(monitor_layout)
+
+        # --- Dashboard Tab Layout ---
         dash_layout = QVBoxLayout()
         dash_layout.addWidget(self.canvas)
 
-        # Remove unused buttons variable
         save_button = QPushButton("Save")
         cancel_button = QPushButton("Cancel")
         button_layout = QHBoxLayout()
@@ -74,11 +67,12 @@ class WatchdogGUI(QMainWindow):
         button_layout.addWidget(cancel_button)
         dash_layout.addLayout(button_layout)
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(dash_layout)
-        self.setLayout(main_layout)
-        # --- Main Layout ---
+        self.dashboard_tab.setLayout(dash_layout)
+
+        # --- Final Assembly ---
         self.setCentralWidget(self.tabs)
+        self.core = WatchdogCore()
+        self.thread = None
         self.core = WatchdogCore()
         self.thread = None
 
