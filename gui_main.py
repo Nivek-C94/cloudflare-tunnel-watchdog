@@ -183,16 +183,8 @@ class WatchdogGUI(QMainWindow):
         layout.addRow("On Recovery (one per line)", recovery_input)
 
         save_btn = QPushButton("Save")
-        save_btn.clicked.connect(
-            lambda: self.save_settings(
-                dialog,
-                url_input.text(),
-                interval_input.value(),
-                site_down_input.toPlainText(),
-                wifi_down_input.toPlainText(),
-                recovery_input.toPlainText(),
-            )
-        )
+        save_btn.clicked.connect(self.save_settings)
+        layout.addWidget(save_btn)
         layout.addWidget(save_btn)
 
         dialog.setLayout(layout)
