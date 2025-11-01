@@ -125,6 +125,7 @@ class WatchdogCore:
                                         capture_output=True,
                                         text=True,
                                         encoding="utf-8",
+                                        timeout=15,
                                     )
                                 else:
                                     completed = subprocess.run(
@@ -132,6 +133,7 @@ class WatchdogCore:
                                         capture_output=True,
                                         text=True,
                                         encoding="utf-8",
+                                        timeout=15,
                                     )
 
                                 if completed.returncode == 0:
@@ -144,10 +146,14 @@ class WatchdogCore:
                                     )
                                     if completed.stderr:
                                         self.log(completed.stderr.strip())
+                            except subprocess.TimeoutExpired:
+                                self.log(f"⚠️ Command timed out after 15s: {command}")
                             except Exception as e:
                                 self.log(f"💥 Command error ({command}): {e}")
 
                 run_commands(self.settings.get("on_site_fail", []), "on-site-fail")
+                run_commands(self.settings.get("on_wifi_fail", []), "on-wifi-fail")
+                run_commands(self.settings.get("on_recovery", []), "on-recovery")
                 run_commands(self.settings.get("on_wifi_fail", []), "on-wifi-fail")
                 run_commands(self.settings.get("on_recovery", []), "on-recovery")
                 time.sleep(interval)
