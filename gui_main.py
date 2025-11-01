@@ -21,7 +21,6 @@ from watchdog_core import WatchdogCore
 class WatchdogGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Cloudflare Tunnel Watchdog v2.0")
 
         # Load icon
         base_path = (
