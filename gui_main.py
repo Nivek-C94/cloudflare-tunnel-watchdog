@@ -137,12 +137,13 @@ class WatchdogGUI(QMainWindow):
 
     def open_settings(self):
         settings = self.core.settings
-        from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit
+        from PyQt6.QtWidgets import QDialog, QFormLayout, QLineEdit, QTextEdit
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Settings")
         layout = QFormLayout(dialog)
 
+        # Basic fields
         url_input = QLineEdit(settings.get("target_url", ""))
         interval_input = QSpinBox()
         interval_input.setValue(settings.get("check_interval", 30))
@@ -150,12 +151,73 @@ class WatchdogGUI(QMainWindow):
         layout.addRow("Target URL", url_input)
         layout.addRow("Check Interval (s)", interval_input)
 
+        # Recovery command sections
+        site_down_input = QTextEdit()
+        site_down_input.setPlainText("\n".join(settings.get("on_site_fail", [])))
+
+        wifi_down_input = QTextEdit()
+        wifi_down_input.setPlainText("\n".join(settings.get("on_wifi_fail", [])))
+
+        recovery_input = QTextEdit()
+        recovery_input.setPlainText("\n".join(settings.get("on_recovery", [])))
+
+        layout.addRow("Site Down (one per line)", site_down_input)
+        layout.addRow("Wi-Fi Down (one per line)", wifi_down_input)
+        layout.addRow("On Recovery (one per line)", recovery_input)
+
         save_btn = QPushButton("Save")
-        save_btn.clicked.connect(lambda: dialog.accept())
+        save_btn.clicked.connect(
+            lambda: self.save_settings(
+                dialog,
+                url_input.text(),
+                interval_input.value(),
+                site_down_input.toPlainText(),
+                wifi_down_input.toPlainText(),
+                recovery_input.toPlainText(),
+            )
+        )
         layout.addWidget(save_btn)
 
         dialog.setLayout(layout)
         dialog.exec()
+
+    def save_settings(
+        self,
+        dialog,
+        target_url,
+        interval,
+        site_down_text,
+        wifi_down_text,
+        recovery_text,
+    ):
+        self.core.settings.update(
+            {
+                "target_url": target_url,
+                "check_interval": interval,
+                "on_site_fail": [
+                    cmd.strip() for cmd in site_down_text.splitlines() if cmd.strip()
+                ],
+                "on_wifi_fail": [
+                    cmd.strip() for cmd in wifi_down_text.splitlines() if cmd.strip()
+                ],
+                "on_recovery": [
+                    cmd.strip() for cmd in recovery_text.splitlines() if cmd.strip()
+                ],
+            }
+        )
+        self.core.save_settings()
+        self.core.reload_settings()
+        self.log_message("💾 Settings updated and reloaded.")
+        try:
+            self.tray.showMessage(
+                "✅ Settings Saved",
+                "Your configuration changes were saved successfully.",
+                QSystemTrayIcon.MessageIcon.Information,
+                3000,
+            )
+        except Exception:
+            pass
+        dialog.accept()
 
     def view_log(self):
         import subprocess
