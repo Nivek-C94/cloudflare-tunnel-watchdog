@@ -1,7 +1,6 @@
 import logging
 import os
 import requests
-import time
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
