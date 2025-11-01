@@ -21,7 +21,7 @@ from watchdog_core import WatchdogCore
 class WatchdogGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        icon_path = os.path.join(os.path.dirname(__file__), "icon.ico")
         # Load icon
         base_path = (
             os.path.dirname(sys.executable)
